@@ -63,7 +63,6 @@ export default function HeadphoneTest() {
 
       <input
         type="file"
-        accept="audio/*"
         aria-label="Choose a test audio file"
         onChange={(event) => {
           setFile(event.target.files?.[0] ?? null);
