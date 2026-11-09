@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent } from "react";
 import type { User } from "firebase/auth";
 
 import RecordButton from "./RecordButton";
@@ -32,12 +31,23 @@ export default function AssistantChat({ user }: { user: User }) {
     return () => activeRequest.current?.abort();
   }, []);
 
-  async function send(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function sendMessage(
+    rawText: string,
+    fromRecording = false,
+    ) {
+    const text = rawText.trim();
 
-    const text = message.trim();
+    if (
+        !text ||
+        activeRequest.current ||
+        speaking ||
+        (audioBusy && !fromRecording)
+    ) {
+        return;
+    }
 
-    if (!text || activeRequest.current || audioBusy || speaking) return;
+    // Keep the transcribed request visible if sending fails.
+    setMessage(text);
 
     const controller = new AbortController();
     activeRequest.current = controller;
@@ -185,12 +195,19 @@ export default function AssistantChat({ user }: { user: User }) {
       )}
 
         <RecordButton
-        user={user}
-        disabled={busy || speaking}
-        onTranscript={setMessage}
-        onBusyChange={setAudioBusy}
-        />
-      <form onSubmit={send}>
+            user={user}
+            disabled={busy || speaking}
+            onTranscript={(text) => {
+                void sendMessage(text, true);
+            }}
+            onBusyChange={setAudioBusy}
+            />
+        <form
+        onSubmit={(event) => {
+            event.preventDefault();
+            void sendMessage(message);
+        }}
+        >
         <label htmlFor="message">Your message</label>
 
         <textarea
