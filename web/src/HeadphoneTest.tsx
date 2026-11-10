@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
-export default function HeadphoneTest() {
+import type { User } from "firebase/auth";
+import { recordAudio } from "./recordAudio";
+
+export default function HeadphoneTest({ user }: { user: User }) {
+
   const audio = useRef<HTMLAudioElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState("Select an audio file to begin.");
@@ -19,7 +23,87 @@ export default function HeadphoneTest() {
     player.src = url;
 
     const session = navigator.mediaSession;
+    let active: AbortController | null = null;
+    let completedRecordings = 0;
 
+    async function captureQuestion() {
+    if (active || !player || document.hidden) return;
+
+    const controller = new AbortController();
+    active = controller;
+
+    let timeout: number | undefined;
+
+    try {
+        player.pause();
+        session.playbackState = "paused";
+
+        setStatus("Opening microphone from headphone button…");
+
+        const clip = await recordAudio(
+        controller.signal,
+        () => setStatus("Listening—speak, then pause."),
+        );
+
+        controller.signal.throwIfAborted();
+        setStatus("Transcribing headphone-triggered recording…");
+
+        timeout = window.setTimeout(
+        () => controller.abort(),
+        60_000,
+        );
+
+        const token = await user.getIdToken();
+        controller.signal.throwIfAborted();
+
+        const response = await fetch(
+        "https://assistant-api-efh5mnk57a-uc.a.run.app/assistant/transcribe",
+        {
+            method: "POST",
+            headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": clip.type,
+            },
+            body: clip,
+            signal: controller.signal,
+        },
+        );
+
+        if (!response.ok) {
+        throw new Error(`Transcription returned HTTP ${response.status}.`);
+        }
+
+        const result = await response.json();
+
+        if (
+        typeof result.text !== "string" ||
+        !result.text.trim()
+        ) {
+        throw new Error("No intelligible speech detected.");
+        }
+
+        controller.signal.throwIfAborted();
+        completedRecordings += 1;
+
+        setStatus(
+        `Recording ${completedRecordings}: ${result.text} ` +
+        "Press your headphone button again without replaying the clip.",
+        );
+    } catch (error) {
+        if (!controller.signal.aborted) {
+        setStatus(
+            error instanceof Error
+            ? error.message
+            : "Headphone recording failed.",
+        );
+        } else if (!document.hidden) {
+        setStatus("Recording or transcription was interrupted.");
+        }
+    } finally {
+        window.clearTimeout(timeout);
+        active = null;
+    }
+    }
     try {
       session.metadata = new MediaMetadata({
         title: "Assistant headphone test",
@@ -45,6 +129,7 @@ export default function HeadphoneTest() {
     }
 
     return () => {
+      active?.abort();
       player.pause();
       player.removeAttribute("src");
       player.load();
@@ -55,7 +140,7 @@ export default function HeadphoneTest() {
 
       URL.revokeObjectURL(url);
     };
-  }, [file]);
+  }, [file. user]);
 
   return (
     <section>

@@ -77,7 +77,7 @@ export default function App() {
       </button>
 
       {error && <p role="alert">{error}</p>}
-      {user && <HeadphoneTest />}
+      {user && <HeadphoneTest key={user.uid} user={user}/>}
       {user && <AssistantChat key={user.uid} user={user} />}
     </main>
   );
