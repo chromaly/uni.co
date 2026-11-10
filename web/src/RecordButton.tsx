@@ -7,6 +7,7 @@ type Props = {
   disabled: boolean;
   onTranscript: (text: string) => void;
   onBusyChange: (busy: boolean) => void;
+  activity?: "idle" | "thinking" | "speaking";
 };
 
 export default function RecordButton({
@@ -14,6 +15,7 @@ export default function RecordButton({
   disabled,
   onTranscript,
   onBusyChange,
+  activity = "idle",
 }: Props) {
   const [phase, setPhase] = useState<
     "idle" | "starting" | "recording" | "transcribing"
@@ -125,10 +127,27 @@ export default function RecordButton({
     }
   }
 
+    const displayPhase = activity === "idle" ? phase : activity;
+
+  const labels = {
+    idle: "Tap to talk",
+    starting: "Opening microphone…",
+    recording: "Listening…",
+    transcribing: "Transcribing…",
+    thinking: "Thinking…",
+    speaking: "Speaking…",
+  };
+
   return (
-    <div>
+    <div className="voice-control" data-state={displayPhase}>
       <button
+        className="voice-orb"
         type="button"
+        aria-label={
+          phase === "recording"
+            ? "Stop recording"
+            : labels[displayPhase]
+        }
         disabled={
           disabled ||
           phase === "starting" ||
@@ -142,17 +161,23 @@ export default function RecordButton({
           }
         }}
       >
-        {phase === "starting"
-          ? "Opening microphone…"
-          : phase === "recording"
-            ? "Stop recording"
-            : phase === "transcribing"
-              ? "Transcribing…"
-              : "Record message"}
+        <span className="orb-ring" aria-hidden="true" />
+
+        <span className="orb-wave" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((index) => (
+            <span key={index} />
+          ))}
+        </span>
       </button>
 
+      <p className="voice-status" role="status">
+        {labels[displayPhase]}
+      </p>
+
       {phase === "recording" && (
-        <p>Listening. Pause to finish, or press Stop recording.</p>
+        <p className="voice-hint">
+          Pause to finish, or tap again.
+        </p>
       )}
 
       {error && <p role="alert">{error}</p>}

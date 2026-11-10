@@ -53,29 +53,51 @@ export default function App() {
     return <main>Checking sign-in…</main>;
   }
 
-  return (
+   return (
     <main>
-      <h1>Your assistant</h1>
+      <header className="app-header">
+       <div className="header-content">
+          <h1>uni.co</h1>
+          <p>Your very own personal assistant. So cute.</p>
 
-      <p>
-        {user
-          ? `Signed in as ${user.displayName ?? user.email ?? "you"}.`
-          : "Sign in with the Google account you use for Planner."}
-      </p>
+          <div className="account-row">
+            <p>
+              {user
+                ? user.displayName ?? user.email
+                : "Your day, a little more connected."}
+            </p>
 
-      <button
-        type="button"
-        onClick={handleAuth}
-        disabled={busy}
-      >
-        {busy
-          ? "Please wait…"
-          : user
-            ? "Sign out"
-            : "Continue with Google"}
-      </button>
+            {user && (
+              <button
+                className="quiet-button"
+                type="button"
+                onClick={handleAuth}
+                disabled={busy}
+              >
+                {busy ? "Please wait…" : "Sign out"}
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {!user && (
+        <section className="sign-in">
+          <h2>A little help, whenever you need it.</h2>
+          <p>Sign in to connect to your assistant.</p>
+
+          <button
+            type="button"
+            onClick={handleAuth}
+            disabled={busy}
+          >
+            {busy ? "Signing in…" : "Continue with Google"}
+          </button>
+        </section>
+      )}
 
       {error && <p role="alert">{error}</p>}
+
       {user && <AssistantChat key={user.uid} user={user} />}
     </main>
   );

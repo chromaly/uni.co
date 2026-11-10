@@ -139,97 +139,109 @@ export default function AssistantChat({ user }: { user: User }) {
       setBusy(false);
     }
   }
-
   return (
-    <section className="assistant-chat">
-      <h2>Talk to your assistant</h2>
+    <section className="assistant-chat" aria-label="Voice assistant">
+      <RecordButton
+        user={user}
+        disabled={busy || speaking}
+        onTranscript={(text) => {
+          void sendMessage(text, true);
+        }}
+        onBusyChange={setAudioBusy}
+        activity={speaking ? "speaking" : busy ? "thinking" : "idle"}
+      />
 
-                {supported && (
-        <div>
-            <button
+      {supported && (
+        <div className="voice-toolbar">
+          <button
             type="button"
+            aria-pressed={voiceEnabled}
             disabled={busy || audioBusy}
             onClick={() => {
-                if (voiceEnabled) {
+              if (voiceEnabled) {
                 stop();
                 setVoiceEnabled(false);
-                } else {
+              } else {
                 setVoiceEnabled(true);
                 speak("Spoken replies enabled.");
-                }
+              }
             }}
-            >
-            {voiceEnabled ? "Disable spoken replies" : "Enable spoken replies"}
-            </button>
+          >
+            Voice {voiceEnabled ? "on" : "off"}
+          </button>
 
-            {speaking && (
+          {speaking ? (
             <button type="button" onClick={stop}>
-                Stop speaking
+              Stop speaking
             </button>
-            )}
-
-            {answer && !speaking && (
+          ) : answer ? (
             <button
-                type="button"
-                disabled={busy || audioBusy}
-                onClick={() => speak(answer)}
+              type="button"
+              disabled={busy || audioBusy}
+              onClick={() => speak(answer)}
             >
-                Read reply aloud
+              Replay reply
             </button>
-            )}
+          ) : null}
         </div>
-        )}
+      )}
 
-        {speechError && <p role="alert">{speechError}</p>}
-    {answer && (
-        <div className="assistant-answer" aria-live="polite">
-        {answer}
-        </div>
-    )}
+      {speechError && <p role="alert">{speechError}</p>}
+      {error && <p role="alert">{error}</p>}
 
-      {presentedId && (
-        <p>
-          Review the proposal above. Reply to confirm, change,
-          or cancel it.
+      {answer ? (
+        <article className="reply-panel">
+          <span className="section-label">Latest reply</span>
+
+          <div className="assistant-answer" aria-live="polite">
+            {answer}
+          </div>
+
+          {presentedId && (
+            <p className="proposal-notice">
+              Not saved yet. Review the details, then reply to
+              confirm, change, or cancel.
+            </p>
+          )}
+        </article>
+      ) : (
+        <p className="assistant-intro">
+          Never forget another meeting again.
         </p>
       )}
 
-        <RecordButton
-            user={user}
-            disabled={busy || speaking}
-            onTranscript={(text) => {
-                void sendMessage(text, true);
-            }}
-            onBusyChange={setAudioBusy}
-            />
+      <details className="text-composer">
+        <summary>Prefer to type?</summary>
+
         <form
-        onSubmit={(event) => {
+          onSubmit={(event) => {
             event.preventDefault();
             void sendMessage(message);
-        }}
+          }}
         >
-        <label htmlFor="message">Your message</label>
+          <label htmlFor="message">Your message</label>
 
-        <textarea
-          id="message"
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          placeholder="What events do I have tomorrow?"
-          maxLength={4000}
-          rows={3}
-          disabled={busy || audioBusy || speaking}
-          required
-        />
+          <textarea
+            id="message"
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="What’s on your mind?"
+            maxLength={4000}
+            rows={3}
+            disabled={busy || audioBusy || speaking}
+            required
+          />
 
-        <button
-          type="submit"
-          disabled={busy || audioBusy || speaking || !message.trim()}
-        >
-          {busy ? "Thinking…" : "Send"}
-        </button>
-      </form>
-
-      {error && <p role="alert">{error}</p>}
+          <button
+            type="submit"
+            disabled={
+              busy || audioBusy || speaking || !message.trim()
+            }
+          >
+            {busy ? "Thinking…" : "Send message"}
+          </button>
+        </form>
+      </details>
     </section>
   );
 }
