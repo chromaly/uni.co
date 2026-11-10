@@ -111,17 +111,12 @@ export default function HeadphoneTest({ user }: { user: User }) {
       });
 
       session.setActionHandler("play", () => {
-        setStatus(`PLAY received at ${new Date().toLocaleTimeString()}`);
+  void captureQuestion();
+});
 
-        void player.play().catch(() => {
-          setStatus("PLAY received, but playback was blocked.");
-        });
-      });
-
-      session.setActionHandler("pause", () => {
-        setStatus(`PAUSE received at ${new Date().toLocaleTimeString()}`);
-        player.pause();
-      });
+session.setActionHandler("pause", () => {
+  void captureQuestion();
+});
 
       setStatus("Press Play below, then use your headphone button.");
     } catch {
