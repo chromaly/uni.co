@@ -140,7 +140,7 @@ export default function HeadphoneTest({ user }: { user: User }) {
 
       URL.revokeObjectURL(url);
     };
-  }, [file. user]);
+  }, [file, user]);
 
   return (
     <section>
