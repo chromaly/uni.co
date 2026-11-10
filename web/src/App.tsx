@@ -9,7 +9,6 @@ import type { User } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
 
 import AssistantChat from "./AssistantChat";
-import HeadphoneTest from "./HeadphoneTest";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -77,7 +76,6 @@ export default function App() {
       </button>
 
       {error && <p role="alert">{error}</p>}
-      {user && <HeadphoneTest key={user.uid} user={user}/>}
       {user && <AssistantChat key={user.uid} user={user} />}
     </main>
   );
